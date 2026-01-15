@@ -2,86 +2,101 @@
 
 ## Descripción General
 
-Esta herramienta automatizada permite la extracción, análisis y generación de combinaciones de horarios escolares a partir del Sistema Integral de Información (SII) del TecNM en Celaya. Su propósito principal es facilitar la planificación académica mediante la detección automática de conflictos de horario y la visualización de resúmenes diarios de entrada y salida.
+Esta herramienta ofrece una solución integral para la gestión y planificación de horarios académicos del Sistema Integral de Información (SII) del TecNM en Celaya. El sistema combina la automatización de la extracción de datos con un potente algoritmo de generación de combinaciones, accesible tanto a través de scripts de consola como de una interfaz web intuitiva.
 
-El sistema opera en dos fases secuenciales:
-1.  **Extracción de Datos**: Obtención del código fuente de la oferta académica mediante scraping autenticado.
-2.  **Procesamiento y Generación**: Análisis sintáctico del HTML para construir combinaciones válidas de materias.
+Su objetivo es optimizar el proceso de inscripción permitiendo a los estudiantes visualizar todas las combinaciones posibles de materias, minimizando conflictos y permitiendo filtrar por preferencias como días libres o campus específicos.
+
+## Funcionalidades Principales
+
+1.  **Extracción Automatizada**: Scraping seguro y autenticado de la oferta académica actual.
+2.  **Interfaz Web**: Aplicación amigable para cargar datos y visualizar horarios generados.
+3.  **Filtrado Inteligente**:
+    *   Detección de choques de horario.
+    *   Optimización de tiempos de traslado entre campus.
+    *   Priorización de horarios matutinos (evitar clases a las 7:00 AM).
+    *   Búsqueda de días libres.
 
 ## Tecnologías Utilizadas
 
-El proyecto está construido utilizando Python 3 y las siguientes bibliotecas:
+El proyecto utiliza un stack tecnológico robusto basado en Python 3:
 
-*   **Playwright (async)**: Para la automatización del navegador y la interacción con el portal cautivo del SII.
-*   **BeautifulSoup (bs4)**: Para el análisis sintáctico (parsing) del documento HTML.
-*   **itertools**: Para la generación eficiente de productos cartesianos de combinaciones de grupos.
-*   **AsyncIO**: Para el manejo de operaciones asíncronas de entrada/salida.
+*   **Flask**: Microframework para el despliegue de la interfaz web.
+*   **Playwright**: Automatización moderna de navegadores para la extracción de datos.
+*   **BeautifulSoup (bs4)**: Análisis eficiente de documentos HTML.
+*   **AsyncIO**: Gestión de concurrencia para operaciones de red.
 
 ## Estructura del Proyecto
 
-*   `scrap.py`: Script encargado de iniciar la sesión en el navegador, navegar al módulo de reinscripciones y capturar el código HTML de la tabla de horarios.
-*   `algoritm.py`: Núcleo lógico que procesa el archivo HTML descargado, extrae la información de grupos y docentes, y calcula las combinaciones posibles sin superposición de horarios.
-*   `horarios_sii.html`: Archivo intermedio generado por `scrap.py` que contiene los datos crudos del SII.
-*   `README.md`: Documentación técnica del proyecto.
+*   `app.py`: Servidor web Flask que gestiona la interfaz de usuario y el procesamiento de archivos.
+*   `scrap.py`: Módulo de extracción de datos que interactúa con el portal del SII.
+*   `utils/algoritm.py`: Núcleo lógico para el cálculo de combinaciones y filtrado.
+*   `templates/`: Directorio que contiene las plantillas HTML de la interfaz web.
 
-## Requisitos Previos
+## Requisitos e Instalación
 
+### Prerrequisitos
 *   Python 3.8 o superior.
-*   Navegador Firefox instalado (requerido por Playwright).
+*   Navegador Firefox (gestionado automáticamente por Playwright).
 
-### Instalación de Dependencias
+### Instalación
 
-Se recomienda utilizar un entorno virtual. Instale las dependencias necesarias ejecutando:
+Se recomienda instalar las dependencias en un entorno virtual aislado:
 
 ```bash
+# Instalación de paquetes Python
 pip install -r requirements.txt
+
+# Instalación de binarios del navegador
 playwright install firefox
 ```
 
 ## Guía de Uso
 
-### 1. Configuración de Materias
+El sistema opera en dos etapas: Extracción y Generación.
 
-Antes de ejecutar la generación, debe definir las materias de interés en el archivo `algoritm.py`. Modifique la lista `MATERIAS_OBJETIVO`:
+### Fase 1: Extracción de Datos
+
+Utilice el script `scrap.py` para obtener la oferta académica más reciente.
+
+```bash
+python scrap.py
+```
+> **Nota**: Se abrirá una ventana de navegador donde deberá iniciar sesión manualmente en el portal del SII. Una vez cargada la tabla de horarios, el script guardará automáticamente la información en `horarios_sii.html`.
+
+### Fase 2: Generación de Horarios
+
+#### Opción A: Interfaz Web (Recomendada)
+Para una experiencia visual e interactiva:
+
+1.  Inicie la aplicación web:
+    ```bash
+    python app.py
+    ```
+2.  Abra su navegador en `http://127.0.0.1:5000`.
+3.  Suba el archivo `horarios_sii.html` generado en la fase anterior.
+4.  Seleccione sus preferencias (evitar traslados, días libres, etc.) y genere las opciones.
+
+#### Opción B: Consola
+Para procesamiento directo o integración:
+
+1.  Configure las materias deseadas en `utils/algoritm.py`.
+2.  Ejecute el algoritmo:
+    ```bash
+    python utils/algoritm.py
+    ```
+
+## Configuración Avanzada
+
+Para modificar las materias objetivo sin usar la interfaz web, edite la lista `MATERIAS_OBJETIVO` en el archivo `utils/algoritm.py`:
 
 ```python
 MATERIAS_OBJETIVO = [
     "Cálculo Vectorial",
     "Fundamentos de Base de Datos",
-    "Cultura Empresarial",
-    # Agregue aquí el nombre exacto de la materia según el SII
+    # ... agregue sus materias aquí
 ]
 ```
 
-### 2. Extracción de Datos (Fase 1)
+## Aviso Legal
 
-Ejecute el script de scraping. Esto abrirá una instancia de Firefox para que realice el inicio de sesión manual.
-
-```bash
-python scrap.py
-```
-
-*   El navegador se abrirá en modo visible (no headless).
-*   Inicie sesión con sus credenciales institucionales.
-*   El script detectará automáticamente la tabla de horarios y guardará el archivo `horarios_sii.html`.
-*   El navegador se cerrará automáticamente al finalizar.
-
-### 3. Generación de Horarios (Fase 2)
-
-Una vez obtenido el archivo HTML, ejecute el algoritmo de procesamiento:
-
-```bash
-python algoritm.py
-```
-
-El sistema imprimirá en consola:
-*   Todas las combinaciones de grupos posibles.
-*   Horarios detallados por día.
-*   Nombre del docente por materia.
-*   Resumen de horas de entrada y salida diarias.
-*   Alerta de días libres si los hubiera.
-
-## Notas Técnicas
-
-*   **Seguridad**: El script no almacena ni gestiona credenciales de acceso. El inicio de sesión es totalmente manual y gestionado por el usuario en la instancia del navegador.
-*   **Compatibilidad**: El parser depende de la estructura HTML actual del SII. Cambios en el diseño web de la institución podrían requerir actualizaciones en los selectores de `BeautifulSoup`.
+Esta es una herramienta de apoyo académico desarrollada por terceros y no tiene afiliación oficial con el Tecnológico Nacional de México ni con el SII. El uso de credenciales es local y no se transmite a servidores externos.
