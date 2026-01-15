@@ -32,7 +32,7 @@ def parsear_sii_html(archivo):
             grupo = cols[3].text.strip()
             docente = cols[4].text.strip()
             bloques = []
-            for i, dia_idx in enumerate(range(5, 10)): # 5=Lunes, 9=Viernes
+            for i, dia_idx in enumerate(range(5, 10)):
                 p_tags = cols[dia_idx].find_all('p')
                 for p in p_tags:
                     t = p.text.split()
@@ -50,14 +50,48 @@ def hay_choque(comb):
                         return True
     return False
 
-# --- FUNCIÓN DE IMPRESIÓN CON RESUMEN ---
-def imprimir_opciones(opciones):
+# --- LÓGICA DE EVALUACIÓN ---
+def evaluar_eficiencia(combinacion):
+    total_gaps = 0
+    total_span = 0
+    
+    for dia in range(5):
+        horas_dia = []
+        for materia in combinacion:
+            for b in materia['horario']:
+                if b['dia'] == dia:
+                    horas_dia.append((b['ini'], b['fin']))
+        
+        if horas_dia:
+            horas_dia.sort()
+            entrada = horas_dia[0][0]
+            salida = horas_dia[-1][1]
+            span = salida - entrada
+            
+            duracion_clases = sum(fin - ini for ini, fin in horas_dia)
+            gaps = span - duracion_clases
+            
+            total_gaps += gaps
+            total_span += span
+            
+    return total_gaps, total_span
+
+def imprimir_mejores_opciones(todas_las_combinaciones):
+    # Evaluar y ordenar: Prioridad 1: Menos Gaps. Prioridad 2: Menor Span.
+    evaluaciones = []
+    for c in todas_las_combinaciones:
+        gaps, span = evaluar_eficiencia(c)
+        evaluaciones.append((gaps, span, c))
+    
+    evaluaciones.sort(key=lambda x: (x[0], x[1]))
+    mejores_3 = evaluaciones[:3]
+    
     dias_nombres = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"]
     
-    for idx, comb in enumerate(opciones, 1):
-        print(f"\n{'='*20} OPCIÓN {idx} {'='*20}")
+    for rank, (gaps, span, comb) in enumerate(mejores_3, 1):
+        print(f"\nRANKING {rank} [Horas muertas: {gaps}h | Permanencia: {span}h]")
+        print("="*60)
         
-        # Diccionario para rastrear entrada/salida por día
         resumen_dia = {i: {'entrada': 24, 'salida': 0} for i in range(5)}
         
         for m in comb:
@@ -66,33 +100,30 @@ def imprimir_opciones(opciones):
             horarios_lista = []
             
             for b in m['horario']:
-                # Actualizar resumen de entrada/salida
                 if b['ini'] < resumen_dia[b['dia']]['entrada']:
                     resumen_dia[b['dia']]['entrada'] = b['ini']
                 if b['fin'] > resumen_dia[b['dia']]['salida']:
                     resumen_dia[b['dia']]['salida'] = b['fin']
                 
-                # Formato de línea de materia
                 dia_nom = dias_nombres[b['dia']]
                 horarios_lista.append(f"{dia_nom} {b['ini']}-{b['fin']}")
             
             print(f"● {nombre} ({m['grupo']}) | {' '.join(horarios_lista)} | {docente}")
 
-        # Imprimir el resumen solicitado
-        print(f"\n--- RESUMEN DE TIEMPOS (OPCIÓN {idx}) ---")
+        print(f"\nHORARIOS DE ENTRADA Y SALIDA:")
         for i, dia in enumerate(dias_nombres):
             ent = resumen_dia[i]['entrada']
             sal = resumen_dia[i]['salida']
-            if sal == 0: # No hay clases ese día
-                print(f"  {dia}: LIBRE")
-            else:
+            if sal != 0:
                 print(f"  {dia}: Entrada {ent:02d}:00 | Salida {sal:02d}:00")
-        print("="*50)
+        print("="*60)
 
 # --- EJECUCIÓN ---
-print("🔍 Procesando 30 combinaciones para el TecNM Celaya...")
 datos = parsear_sii_html("horarios_sii.html")
 listas = [datos[m] for m in MATERIAS_OBJETIVO if datos[m]]
 combinaciones = [c for c in itertools.product(*listas) if not hay_choque(c)]
 
-imprimir_opciones(combinaciones)
+if combinaciones:
+    imprimir_mejores_opciones(combinaciones)
+else:
+    print("No se encontraron combinaciones válidas.")
