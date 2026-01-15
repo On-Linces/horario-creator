@@ -34,7 +34,7 @@ El proyecto está construido utilizando Python 3 y las siguientes bibliotecas:
 Se recomienda utilizar un entorno virtual. Instale las dependencias necesarias ejecutando:
 
 ```bash
-pip install playwright beautifulsoup4
+pip install -r requirements.txt
 playwright install firefox
 ```
 
