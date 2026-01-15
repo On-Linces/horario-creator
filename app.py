@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, render_template, request
-import utils.algoritm #-- Aquí importas tu archivo de lógica
+import utils.algoritm as algoritm #-- Aquí importas tu archivo de lógica
 
 app = Flask(__name__)
 
