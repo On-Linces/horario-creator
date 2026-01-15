@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Horarios TecNM</title>
+    <style>
+        body {
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            background: #181825;
+            border: 1px solid #585b70;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        h1,
+        h2 {
+            color: #cba6f7;
+        }
+
+        .btn {
+            background: #89b4fa;
+            color: #11111b;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .materia {
+            color: #89dceb;
+            font-size: 0.9em;
+        }
+
+        .resumen {
+            color: #fab387;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Optimización de Horario SII</h1>
+    <form method="post" enctype="multipart/form-data" class="card">
+        <input type="file" name="file" required>
+        <div style="margin: 15px 0;">
+            <label><input type="checkbox" name="traslado"> Evitar cambio de campus inmediato</label><br>
+            <label><input type="checkbox" name="no_7am"> Evitar clases a las 7 AM</label><br>
+            <label><input type="checkbox" name="dia_libre"> Priorizar día libre</label>
+        </div>
+        <button type="submit" class="btn">Procesar Horarios</button>
+    </form>
+
+    {% for res in resultados %}
+    <div class="card">
+        <h2>Opción {{ loop.index }} (Horas muertas: {{ res.gaps }}h)</h2>
+        {% for m in res.materias %}
+        <div class="materia">● {{ m.materia }} ({{ m.grupo }}) - {{ m.docente }}</div>
+        {% endfor %}
+        <div class="resumen">
+            <p>Horarios:
+                {% for d, h in res.resumen.items() %}
+                {% if h.s != 0 %} {{ d }}: {{h.e}}:00-{{h.s}}:00 | {% endif %}
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+
+</html>
